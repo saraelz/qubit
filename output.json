@@ -1,0 +1,1 @@
+{"junction": {"junction_width": 2.0, "junction_height": 0.4, "junction_offset": 0.2}, "wire": {"wire_width": 0.3, "wire_height": 10.0}, "connection": {"connection_radius": 4.0}, "layers": {"junction_layer": 2, "wire_layer": 1, "connection_layer": 0}}
