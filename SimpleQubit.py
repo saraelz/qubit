@@ -19,7 +19,7 @@ class SimpleQubit:
         wire_height: float,
         wire_layer: int,
         junction_layer: int,
-        connection_layer: int,
+        connection_layer: int
     ):
         self.connection_radius = connection_radius
         self.junction_width = junction_width
