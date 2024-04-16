@@ -1,31 +1,35 @@
-import pdb
-from SimpleQubit import SimpleQubit
 import math
+import os.path
 from dataclasses import dataclass
 import gdspy
+from SimpleQubit import SimpleQubit
 
 
-def _validate_file(filename: str):
+def _validate_file(filename: str) -> bool:
     """
-    Test if file exists
-
-    Returns True if file is found
+    Returns True if file exists in directory.
+    
+    Args:
+        filename (str): This is the name of the input file.
+    Returns:
+        bool: Returns True if file is found.
     """
-    try:
-        with open(filename, 'r') as file:
-            return True
-    except Exception as e:
-        print(f"Could not read the file {filename}. \nException: {e}")
-        return False
+    return os.path.isfile(filename)
 
 
 @dataclass
 class Circle:
+    """
+    This is a test class for circle, especially to organize and instantiate variables
+    """
     radius: float
 
 
 @dataclass
 class Rectangle:
+    """
+    This is a test class for rectangles, especially to organize and instantiate variables
+    """
     width: float
     height: float
 
@@ -36,31 +40,29 @@ def main():
     wire = Rectangle(.3, 10.)
     connection = Circle(4.)
     offset = junction.width/10
-
-    # Define three layers
     layers = {
         "connection_layer": 0,
         "wire_layer": 1,
         "junction_layer": 2
     }
 
-    """Initialize SimpleQubit"""
     q = SimpleQubit(connection_radius=connection.radius, wire_height=wire.height, wire_width=wire.width,
                     junction_offset=offset, junction_height=junction.height, junction_width=junction.width, **layers)
-    cell = q.draw()
+    layout = q.draw()
 
     """Test cases"""
-    polygons = q.get_polygonsets()
+    shapes = q.get_polygonsets()
 
     print("Test 1: assert that the circuit has at least 5 polygons for a simple qubit")
-    assert len(polygons) >= 5
+    assert len(shapes) >= 5
 
     print("Test 2: assert that there are at least 3 layers in the qubit layout")
-    assert len(cell.get_layers()) >= 3
-    print("Test 2b: assert that the actual layers match the expected layers")
-    assert (set(cell.get_layers()) == set(layers.values()))
+    assert len(layout.get_layers()) >= 3
 
-    for shape in polygons:
+    print("Test 2b: assert that the actual layers match the expected layers")
+    assert (set(layout.get_layers()) == set(layers.values()))
+
+    for shape in shapes:
 
         print("Test 3: assert that area > 0")
         assert shape.area() > 0
@@ -100,7 +102,6 @@ def main():
                 print(
                     "Test 9: get corners of rectangle to compare actual and expected distances")
                 corners = shape.polygons[0]
-                # import math
                 length = round(math.dist(corners[0], corners[1]), 1)
                 width = round(math.dist(corners[1], corners[2]), 1)
                 assert (length == wire.width and width == wire.height) or (
@@ -111,7 +112,7 @@ def main():
     assert offset > 0 and offset <= junction.width/2
 
     print("Test 12: Check all polygons connected without gaps between polygons")
-    combined_polygon_set = gdspy.boolean(polygons, None, 'or')
+    combined_polygon_set = gdspy.boolean(shapes, None, 'or')
     assert len(combined_polygon_set.polygons) == 1
 
     """Export to svg file and gds file"""

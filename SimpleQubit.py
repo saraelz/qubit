@@ -1,6 +1,5 @@
-
-import gdspy
 import json
+import gdspy
 from jsonschema import validate, ValidationError
 
 
@@ -20,62 +19,73 @@ class SimpleQubit:
         self.connection_layer = connection_layer
         self.junction_layer = junction_layer
         self.layout = None
-        self.library = None
+        self.gds_library = None
 
     def draw(self) -> gdspy.Cell:
-        """ Draw circuit and return layout cell"""
+        """
+        Draw circuit in gds library
+
+        Returns:
+            gdspy.Cell: Cell from gds library which contains all components of circuit
+        """
         # The GDSII file is called a library, which contains multiple cells.
-        lib = gdspy.GdsLibrary()
+        self.gds_library = gdspy.GdsLibrary()
+        layout = self.gds_library.new_cell('CIRCUIT')
+        repeated_component = self.gds_library.new_cell('WIRE_CONNECTION')
 
-        # Geometry must be placed in cells.
-        circuit = lib.new_cell('QUBIT')
-        repeated_component = lib.new_cell('WIRE_CONNECTION')
-
-        # Create the geometry (a single rectangle)
+        # Create a cell with a component that is used repeatedly.
         w = gdspy.Rectangle(
             (0, 0), (self.wire_width, self.wire_height), layer=self.wire_layer)
 
-        # Create the geometry (a single circle)
         c = gdspy.Round((0, self.wire_height),
                         self.connection_radius, layer=self.connection_layer)
-
-        # Create a cell with a component that is used repeatedly
         repeated_component.add([c, w])
 
-        # Create circuit
+        # Create the layout using repeated components and junction.
         j = gdspy.Rectangle(
             (0, 0), (self.junction_width, self.junction_height), layer=self.junction_layer)
         wc1 = gdspy.CellReference(
             repeated_component, (0+self.junction_offset, self.junction_height))
         wc2 = gdspy.CellReference(
             repeated_component, (self.junction_width-self.junction_offset, 0), rotation=180)
-        circuit.add([j, wc1, wc2])
-
-        # Assign cell and library to instance variable
-        self.layout = circuit
-        self.library = lib
-
-        # Return cell
+        layout.add([j, wc1, wc2])
+        self.layout = layout
         return self.layout
 
     def to_gds(self, filename: str = "output.gds") -> None:
-        """Export to gds file"""
-        if not self.library:
-            self.draw()
+        """
+        Export GDS library to gds file.
 
-        # Save the library in a file.
-        self.library.write_gds(filename)
+        Args:
+            filename (str): This is the name of the file export.
+        Returns: 
+            None
+        """
+        if not self.gds_library:
+            self.draw()
+        self.gds_library.write_gds(filename)
 
     def to_svg(self, filename: str = 'output.svg') -> None:
-        """Export to svg file"""
+        """
+        Export cell that contains the qubit layout to svg file.
+
+        Args:
+            filename (str): This is the name of the file export.
+        Returns: 
+            None
+        """
         if not self.layout:
             self.draw()
 
-        # Save an image of the layout cell as SVG.
         self.layout.write_svg(filename)
 
     def get_polygonsets(self) -> list:
-        """Returns a list of all polygons in the layout"""
+        """
+        Get a list of all polygon instances drawn in the cell that contains the qubit layout.
+
+        Returns: 
+            list[PolygonSet]
+        """
         if not self.layout:
             self.draw()
         return self.layout.get_polygonsets()
@@ -83,7 +93,10 @@ class SimpleQubit:
     @classmethod
     def get_json_schema(cls):
         """
-        Returns the json schema used for the class.
+        Get the json schema used for the class.
+
+        Returns:
+            dict: json schema data
         """
         schema = {
             "type": "object",
@@ -128,13 +141,12 @@ class SimpleQubit:
 
     def serialize(self, filename=None) -> str:
         """
-        Serialize instance to a json file.
+        Serialize instance of SimpleQubit into a json in string or file format. 
 
-        Input:
-            filename (str): The name of the json file to be written. If None, then do not export to file.
-
+        Args:
+            filename (str): Optional name of the file to be written. If None, then do not export to file.
         Returns:
-            json_string (str): The json data of the instance.
+            str: The json data of the instance.
         """
         data = {
             "junction": {
@@ -163,29 +175,33 @@ class SimpleQubit:
 
     @classmethod
     def from_json(cls, data):
-        """Returns an instance of the class SimpleQubit which is initialized according to json
-        Parameter:
-            data: instance of json
+        """
+        Initialize the class from a json.
+
+        Args:
+            data (dict): instance of json
         Returns:
-            instance of Qubit
+            SimpleQubit: new instance of SimpleQubit
+        Raises:
+            ValidationError: json file is not compliant with schema
         """
         try:
             validate(instance=data, schema=cls.get_json_schema())
         except ValidationError as e:
-            print("Validation testing failed. Json file is not compliant with schema")
+            print(
+                "Validation testing failed. Json file is not compliant with schema. Error: {e}")
             return None
         return cls(**data['junction'], **data['wire'], **data['connection'], **data['layers'])
 
     @classmethod
     def from_json_string(cls, json_string: str):
         """
-        Deserialize the json data to a class instance.
+        Deserialize the json data by converting a string to a class instance.
 
-        Parameter:
+        Args:
             json_string (str): The json data of the instance.
-
         Returns:
-            instance of Qubit
+            SimpleQubit: new instance of SimpleQubit
         """
         data = json.loads(json_string)
         return cls.from_json(data)
@@ -193,13 +209,12 @@ class SimpleQubit:
     @classmethod
     def from_json_file(cls, filename: str):
         """
-        Deserialize the json data from a json file to a Qubit instance.
+        Deserialize the json data by converting a json file to an instance of SimpleQubit.
 
-        Parameter:
+        Args:
             filename (str): The name of the json file.
-
         Returns:
-            instance of Qubit
+            SimpleQubit: new instance of SimpleQubit
         """
         try:
             with open(filename, 'r') as json_file:
@@ -212,7 +227,6 @@ class SimpleQubit:
 
 
 if __name__ == "__main__":
-
     # Define a basic test case to initialize class instance.
     layers = {
         "connection_layer": 0,
