@@ -85,10 +85,10 @@ class TestSimpleQubit(unittest.TestCase):
                     self.assertAlmostEqual(self.connection.radius, actual_radius, places=1)
                 elif layer == self.layers["junction_layer"]:
                     actual = _calculate_gdspy_rectangle_dimensions(shape)
-                    self.assertTrue(Rectangle(self.junction.width,self.junction.height).equals(actual))
+                    self.assertTrue(Rectangle(self.junction.width, self.junction.height).equals(actual))
                 elif layer == self.layers["wire_layer"]:
                     actual = _calculate_gdspy_rectangle_dimensions(shape)
-                    self.assertTrue(Rectangle(self.wire.width,self.wire.height).equals(actual))
+                    self.assertTrue(Rectangle(self.wire.width, self.wire.height).equals(actual))
 
     def test_offset_range(self):
         self.assertGreater(self.offset, 0)
