@@ -113,14 +113,15 @@ class TestSimpleQubit(unittest.TestCase):
     def test_serialization_and_deserialization(self):
         """
         Returns true if all conditions are met:
-        (1) serialize() should write to file
-        (2) serialize() should not return ""
-        (3) json file exists in directory
+        (1) to_json(...) should write to file
+        (2) json file exists in directory
+        (3) to_json(...) should not return "" or None value
         (4) json file matches schema
-        (5) deserialize() should not return None object
+        (5) serialization output is capable of reinstatiating SimpleQubit
+        (6) from_json(...) function should not return None object
         """
         output_json = "output.json"
-        self.assertTrue(self.qubit.serialize(filename=output_json))
+        self.assertTrue(self.qubit.to_json(filename=output_json))
         self.assertTrue(_validate_file(filename=output_json))
         self.assertTrue(self.qubit.from_json_file(filename=output_json))
 

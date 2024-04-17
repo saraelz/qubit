@@ -208,12 +208,11 @@ class SimpleQubit:
         data = json.loads(json_string)
         try:
             validate(instance=data, schema=cls.get_json_schema())
+            return cls(**data["junction"], **data["wire"], **data["connection"], **data["layers"])
         except ValidationError as e:
             print("Validation testing failed. Json file is not compliant with schema.")
             return None
-        return cls(
-            **data["junction"], **data["wire"], **data["connection"], **data["layers"]
-        )
+        
 
     @classmethod
     def from_json_file(cls, filename: str):
@@ -247,5 +246,5 @@ if __name__ == "__main__":
         **layers,
     )
     q.draw()
-    q.serialize("first_test.json")
+    q.to_json("first_test.json")
     q.from_json_file("first_test.json")
