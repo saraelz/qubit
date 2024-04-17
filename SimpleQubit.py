@@ -162,7 +162,7 @@ class SimpleQubit:
         }
         return schema
 
-    def serialize(self, filename=None) -> str:
+    def to_json(self, filename=None) -> str:
         """
         Serialize instance of SimpleQubit into a json in string or file format.
 
@@ -196,32 +196,9 @@ class SimpleQubit:
         return json_string
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, json_string: str):
         """
-        Initialize the class from a json.
-
-        Args:
-            data (dict): instance of json
-        Returns:
-            SimpleQubit: new instance of SimpleQubit
-        Raises:
-            ValidationError: json file is not compliant with schema
-        """
-        try:
-            validate(instance=data, schema=cls.get_json_schema())
-        except ValidationError as e:
-            print(
-                "Validation testing failed. Json file is not compliant with schema. Error: {e}"
-            )
-            return None
-        return cls(
-            **data["junction"], **data["wire"], **data["connection"], **data["layers"]
-        )
-
-    @classmethod
-    def from_json_string(cls, json_string: str):
-        """
-        Deserialize the json data by converting a string to a class instance.
+        Deserialize the json data. Initialize the class from a json.
 
         Args:
             json_string (str): The json data of the instance.
@@ -229,7 +206,14 @@ class SimpleQubit:
             SimpleQubit: new instance of SimpleQubit
         """
         data = json.loads(json_string)
-        return cls.from_json(data)
+        try:
+            validate(instance=data, schema=cls.get_json_schema())
+        except ValidationError as e:
+            print("Validation testing failed. Json file is not compliant with schema.")
+            return None
+        return cls(
+            **data["junction"], **data["wire"], **data["connection"], **data["layers"]
+        )
 
     @classmethod
     def from_json_file(cls, filename: str):
@@ -244,7 +228,7 @@ class SimpleQubit:
         try:
             with open(filename, "r") as json_file:
                 json_string = json_file.read()
-            return cls.from_json_string(json_string)
+                return cls.from_json(json_string)
         except Exception as e:
             print(f"Could not read the json file {json_file}. \nException: {e}")
             return None
